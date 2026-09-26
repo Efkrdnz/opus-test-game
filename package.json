@@ -1,0 +1,16 @@
+{
+  "name": "homunculus-lab",
+  "version": "1.0.0",
+  "description": "Sandbox alchemy game: mix mythical, elemental, scientific and fictional substances and test them on a fully simulated homunculus.",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "build": "node scripts/build.mjs",
+    "test": "node --test \"tests/*.test.mjs\""
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
