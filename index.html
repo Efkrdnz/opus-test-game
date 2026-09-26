@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- HEAD:START -->
+<title>Homunculus Lab</title>
+<meta name="description" content="Mix mythical, elemental, scientific and fictional substances and test them on a fully simulated homunculus.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Chakra+Petch:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<!-- HEAD:END -->
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<!-- APP:START -->
+<div id="app" class="app">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">⚗</span>
+      <span class="brand-name">HOMUNCULUS</span>
+      <span class="brand-sub">alchemy &amp; clinical observation lab</span>
+    </div>
+    <div class="topbar-mid">
+      <span class="clock" id="simClock" title="Time the current subject has spent in the chamber">00:00</span>
+      <div class="seg" id="speedSeg" role="group" aria-label="Simulation speed">
+        <button type="button" data-speed="0" title="Pause (Space)">❚❚</button>
+        <button type="button" data-speed="1" class="on">1×</button>
+        <button type="button" data-speed="2">2×</button>
+        <button type="button" data-speed="4">4×</button>
+        <button type="button" data-speed="8">8×</button>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button type="button" class="btn ghost" id="soundBtn" title="Monitor sounds">🔇 Sound</button>
+      <button type="button" class="btn ghost" id="codexBtn">📖 Codex</button>
+      <button type="button" class="btn ghost" id="helpBtn">? Guide</button>
+    </div>
+  </header>
+
+  <!-- ============ LAB BENCH ============ -->
+  <aside class="col lab" id="labCol">
+    <section class="panel shelf">
+      <div class="panel-head"><h2>Reagent Shelf</h2><span class="count" id="shelfCount"></span></div>
+      <div class="chips" id="catChips"></div>
+      <input type="search" id="shelfSearch" class="input" placeholder="Search reagents, tags or effects…" autocomplete="off">
+      <div class="shelf-grid" id="shelfGrid"></div>
+    </section>
+
+    <section class="panel flask-panel">
+      <div class="panel-head"><h2>Flask</h2><span class="count" id="flaskTotal">0 / 500 ml</span></div>
+      <div class="flask-wrap">
+        <canvas id="flaskCanvas" class="flask-canvas" width="90" height="120" aria-hidden="true"></canvas>
+        <div class="ingredients" id="ingredientList"><p class="empty">Click reagents on the shelf to pour 10 ml into the flask.</p></div>
+      </div>
+      <div class="process">
+        <div class="row">
+          <label class="lbl" for="heatOn"><input type="checkbox" id="heatOn"> Burner</label>
+          <input type="range" id="heatTemp" min="-200" max="1500" step="5" value="80" disabled aria-label="Burner temperature">
+          <output id="heatOut" class="mono">off</output>
+        </div>
+        <div class="row">
+          <span class="lbl">Stir</span>
+          <div class="seg small" id="stirSeg">
+            <button type="button" data-v="none">None</button>
+            <button type="button" data-v="gentle" class="on">Gentle</button>
+            <button type="button" data-v="vigorous">Vigorous</button>
+            <button type="button" data-v="vortex">Vortex</button>
+          </div>
+        </div>
+        <div class="row">
+          <label class="lbl" for="brewTime">Steep</label>
+          <select id="brewTime" class="input small"></select>
+        </div>
+        <div class="treatments" id="treatments"></div>
+        <div class="row actions">
+          <button type="button" class="btn primary" id="brewBtn">⚗ Brew mixture</button>
+          <button type="button" class="btn ghost" id="emptyBtn">Empty</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel admin-panel" id="adminPanel">
+      <div class="panel-head"><h2>Administer</h2><span class="count" id="vialLeft"></span></div>
+      <div class="vial" id="vialSummary"><p class="empty">No mixture brewed yet.</p></div>
+      <div class="routes" id="routeGrid"></div>
+      <div class="row" id="siteRow" hidden>
+        <label class="lbl" for="siteSel">Site</label>
+        <select id="siteSel" class="input small"></select>
+      </div>
+      <div class="row">
+        <label class="lbl" for="doseMl">Dose</label>
+        <input type="range" id="doseMl" min="1" max="100" step="1" value="10">
+        <output id="doseOut" class="mono">10 ml</output>
+      </div>
+      <div class="dose-presets" id="dosePresets"></div>
+      <div class="warnings" id="adminWarn"></div>
+      <button type="button" class="btn primary wide" id="adminBtn" disabled>Administer</button>
+    </section>
+
+    <section class="panel result-panel" id="resultPanel">
+      <div class="panel-head"><h2>Mixture</h2><span class="count" id="resultVol"></span></div>
+      <div id="resultBody"><p class="empty">Brew something to see its analysis here.</p></div>
+    </section>
+
+    <section class="panel cabinet-panel">
+      <div class="panel-head"><h2>Cabinet</h2><span class="count" id="cabinetCount"></span></div>
+      <div id="cabinetList"><p class="empty">Saved mixtures appear here.</p></div>
+    </section>
+  </aside>
+
+  <!-- ============ CHAMBER ============ -->
+  <main class="col chamber">
+    <div class="layerbar">
+      <div class="seg layers" id="layerSeg" role="group" aria-label="Anatomy layer"></div>
+      <input type="range" id="peel" min="0" max="5" step="0.01" value="0" aria-label="Peel depth">
+      <div class="toggles">
+        <button type="button" class="tog" data-tog="xray">X-ray</button>
+        <button type="button" class="tog" data-tog="thermal">Thermal</button>
+        <button type="button" class="tog" data-tog="damage">Damage</button>
+        <button type="button" class="tog" data-tog="labels">Labels</button>
+      </div>
+    </div>
+    <div class="stage" id="stage">
+      <canvas id="scene"></canvas>
+      <div class="tooltip" id="partTip" hidden></div>
+      <div class="bench-boom" id="benchBoom" hidden></div>
+    </div>
+    <div class="commandbar">
+      <div class="cmd-grid" id="cmdGrid"></div>
+      <form class="cmd-input" id="cmdForm" autocomplete="off">
+        <input type="text" id="cmdText" class="input" placeholder="Type a command: jump · run · say hello · solve…" aria-label="Command">
+        <label class="lbl" for="liftKg">Bar</label>
+        <select id="liftKg" class="input small"></select>
+        <button type="submit" class="btn">Send</button>
+      </form>
+    </div>
+    <div class="lower">
+      <section class="panel env">
+        <div class="panel-head"><h2>Chamber</h2></div>
+        <div class="env-grid">
+          <label for="envTemp">Air <output id="envTempOut" class="mono">22 °C</output></label>
+          <input type="range" id="envTemp" min="-60" max="120" step="1" value="22">
+          <label for="envGrav">Gravity <output id="envGravOut" class="mono">1.0 g</output></label>
+          <input type="range" id="envGrav" min="0" max="4" step="0.1" value="1">
+          <label for="envO2">Oxygen <output id="envO2Out" class="mono">21 %</output></label>
+          <input type="range" id="envO2" min="0" max="100" step="1" value="21">
+          <label for="envRad">Radiation <output id="envRadOut" class="mono">0.0</output></label>
+          <input type="range" id="envRad" min="0" max="5" step="0.1" value="0">
+        </div>
+        <div class="tools">
+          <button type="button" class="btn tool" data-tool="defib">⚡ Defibrillate</button>
+          <button type="button" class="btn tool" data-tool="stabilize">🩺 Stabilise</button>
+          <button type="button" class="btn tool" data-tool="dialysis">🩸 Dialysis</button>
+          <button type="button" class="btn tool" data-tool="restore">✚ Full restore</button>
+          <button type="button" class="btn tool warn" data-tool="new">⟳ New subject</button>
+        </div>
+      </section>
+      <section class="panel log-panel">
+        <div class="panel-head"><h2>Lab Log</h2><button type="button" class="btn tiny ghost" id="clearLog">Clear</button></div>
+        <ol class="log" id="log"></ol>
+      </section>
+    </div>
+  </main>
+
+  <!-- ============ MONITOR ============ -->
+  <aside class="col monitor" id="monCol">
+    <section class="panel status">
+      <div class="status-top">
+        <div>
+          <div class="subject" id="subjName">Subject</div>
+          <div class="subject-sub mono" id="subjSub"></div>
+        </div>
+        <span class="pill" id="statusPill">STABLE</span>
+      </div>
+      <div class="rhythm mono" id="rhythmLbl">Sinus rhythm</div>
+    </section>
+    <section class="vitals" id="vitals"></section>
+    <section class="waves">
+      <div class="wave"><span class="wave-lbl hr">ECG II</span><canvas id="wEcg"></canvas></div>
+      <div class="wave"><span class="wave-lbl spo2">PLETH</span><canvas id="wPleth"></canvas></div>
+      <div class="wave"><span class="wave-lbl rr">RESP</span><canvas id="wResp"></canvas></div>
+      <div class="wave"><span class="wave-lbl eeg">EEG Fp1</span><canvas id="wEeg"></canvas></div>
+    </section>
+    <section class="panel detail">
+      <div class="tabs" id="monTabs" role="tablist"></div>
+      <div class="tabpane" id="monPane"></div>
+    </section>
+  </aside>
+</div>
+
+<div class="modal" id="modal" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-head">
+      <h2 id="modalTitle">Codex</h2>
+      <button type="button" class="btn ghost" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="tabs" id="modalTabs"></div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="hovercard" id="hoverCard" hidden></div>
+<!-- APP:END -->
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
